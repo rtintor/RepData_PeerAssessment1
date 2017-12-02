@@ -5,21 +5,78 @@ output:
     keep_md: true
 ---
 
+First project of reproducible reserch course week 2 by Rodrigo Tintor
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ## Loading and preprocessing the data
 
-
+```{r load}
+activity <- read.csv("activity.csv", na.strings = "NA")
+activityOutNA <- activity[!is.na(activity["steps"]),]
+activityOutNA["date"] = as.Date(activityOutNA$date)
+summary(activityOutNA)
+head(activityOutNA)
+```
 
 ## What is mean total number of steps taken per day?
 
-
+```{r mean}
+total_act <- aggregate(x = activityOutNA$steps, FUN = sum, by = list(activityOutNA$date))
+mean_act <- aggregate(x = activityOutNA$steps, FUN = mean, by = list(activityOutNA$date))
+median_act <- aggregate(x = activityOutNA$steps, FUN = median, by = list(activityOutNA$date))
+hist(total_act$x, , xlab = "Steps by date")
+title(main = "Histogram of total steps per day")
+```
 
 ## What is the average daily activity pattern?
 
-
+```{r pattern}
+total_act_time <- aggregate(x = activityOutNA$steps, FUN = sum, by = list(activityOutNA$interval))
+plot(total_act_time$Group.1, total_act_time$x, type = "l", xlab = "Interval", ylab = "Steps", main = "Average step per interval per day")
+```
 
 ## Imputing missing values
+Missing values by column
 
+```{r imputing}
+naNumbers <- colMeans(is.na(activity)) * 100
+naNumbers[naNumbers > 0]
+```
 
+For missing values we will use the median of the same interval
+
+```{r imputing2}
+median_act_inter <- aggregate(x = activityOutNA$steps, FUN = median, by = list(activityOutNA$interval))
+activityNA <- activity[is.na(activity["steps"]),]
+activityNA["date"] = as.Date(activityNA$date)
+activityNA$steps <- median_act_inter$x[match(activityNA$interval, median_act_inter$Group.1)]
+
+activityNoNA <- rbind(activityOutNA, activityNA)
+
+total_act_f <- aggregate(x = activityNoNA$steps, FUN = sum, by = list(activityNoNA$date))
+mean_act_f <- aggregate(x = activityNoNA$steps, FUN = mean, by = list(activityNoNA$date))
+median_act_f <- aggregate(x = activityNoNA$steps, FUN = median, by = list(activityNoNA$date))
+hist(total_act_f$x, , xlab = "Steps by date", main = "Average step per interval per day (filled NA)")
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r weekdays}
+w1 <- weekdays(activityNoNA$date, abbreviate = TRUE)
+w2 <- w1=="Sat" | w1 =="Sun"
+week <- factor(w2, labels = c("weekday","weekend"))
+activityNoNA["daytype"] <- week
+activityNoNAWD <- subset(activityNoNA ,daytype=="weekday")
+activityNoNAWE <- subset(activityNoNA ,daytype=="weekend")
+mean_act_f2 <- aggregate(x = activityNoNAWD$steps, FUN = mean, by = list(activityNoNAWD$interval))
+plot(mean_act_f2$Group.1, mean_act_f2$x, type = "l", xlab = "Interval", ylab = "Steps", main = "Average step per interval per weekday")
+mean_act_f3 <- aggregate(x = activityNoNAWE$steps, FUN = mean, by = list(activityNoNAWE$interval))
+plot(mean_act_f3$Group.1, mean_act_f3$x, type = "l", xlab = "Interval", ylab = "Steps", main = "Average step per interval per weekend")
+```
+
+Thanks in advance for your comments
+Rodrigo
+
